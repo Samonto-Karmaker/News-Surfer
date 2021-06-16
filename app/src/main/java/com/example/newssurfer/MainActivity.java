@@ -6,10 +6,20 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Adapter;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Header;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
@@ -21,11 +31,18 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements item_clicked_callback {
 
     RecyclerView recyclerView;
     Adapter_For_RecyclerView adapter;
+    Spinner add_filter;
+    ArrayAdapter<String> arrayAdapter;
+    ProgressBar loading;
+    Activity a = this;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,16 +55,39 @@ public class MainActivity extends AppCompatActivity implements item_clicked_call
 
     private void viewInitializer(){
 
+        loading = (ProgressBar) findViewById(R.id.loading);
+
+        add_filter = findViewById(R.id.add_filter);
+        arrayAdapter = new ArrayAdapter<>(this, R.layout.support_simple_spinner_dropdown_item, API_de.CATEGORY);
+        add_filter.setAdapter(arrayAdapter);
+        add_filter.setSelection(arrayAdapter.getPosition("business"));
+
         recyclerView = findViewById(R.id.recycler);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new Adapter_For_RecyclerView(get_data(this), this);
+        adapter = new Adapter_For_RecyclerView(this);
         recyclerView.setAdapter(adapter);
+
+        add_filter.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                get_data(a, i);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                get_data(a, 0);
+
+            }
+        });
 
     }
 
-    private ArrayList<News> get_data(final Activity activity){
 
-        String url = "https://newsapi.org/v2/top-headlines?country=us&apiKey=" + API_de.API_KEY;
+    private void get_data(final Activity activity, int category){
+
+        loading.setVisibility(View.VISIBLE);
+
+        String url = "https://newsapi.org/v2/top-headlines?country=us&category=" + API_de.CATEGORY[category] + "&apiKey=" + API_de.API_KEY;
         ArrayList<News> n = new ArrayList<>();
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
@@ -70,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements item_clicked_call
                     }
 
                     adapter.update(n);
+                    loading.setVisibility(View.INVISIBLE);
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -81,13 +122,23 @@ public class MainActivity extends AppCompatActivity implements item_clicked_call
             public void onErrorResponse(VolleyError error) {
                 Toast.makeText(activity, "Something went wrong", Toast.LENGTH_LONG).show();
             }
-        });
+        }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError{
+                HashMap<String, String> headers = new HashMap<>();
+                //headers.put("Content-Type", "application/json");
+                headers.put("User-Agent", "Chrome/5.0");
+                return headers;
+            }
+        };
 
         MySingleton.getInstance(activity).addToRequestQueue(jsonObjectRequest);
-        return n;
+
     }
 
-        @Override
+
+
+    @Override
     public void on_item_click(News i) {
 
             CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();

@@ -1,10 +1,12 @@
 package com.example.newssurfer;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,8 +21,8 @@ public class Adapter_For_RecyclerView extends RecyclerView.Adapter<ViewHolder_Fo
     private ArrayList<News> ITEMS;
     private item_clicked_callback iLISTENER;
 
-    public Adapter_For_RecyclerView(ArrayList<News> items, item_clicked_callback listener){
-        ITEMS = items;
+    public Adapter_For_RecyclerView(item_clicked_callback listener){
+        ITEMS = new ArrayList<>();
         iLISTENER = listener;
     }
 
@@ -34,10 +36,13 @@ public class Adapter_For_RecyclerView extends RecyclerView.Adapter<ViewHolder_Fo
             @Override
             public void onClick(View view) {
 
-                iLISTENER.on_item_click(ITEMS.get(view_holder.getAdapterPosition()));
+                iLISTENER.on_item_click(ITEMS.get(view_holder.getAbsoluteAdapterPosition()));
 
             }
         });
+
+
+
         return view_holder;
 
     }
@@ -48,10 +53,13 @@ public class Adapter_For_RecyclerView extends RecyclerView.Adapter<ViewHolder_Fo
         holder.title.setText(ITEMS.get(position).title);
         holder.author.setText(ITEMS.get(position).author);
         Glide.with(holder.itemView).load(ITEMS.get(position).image_url).into(holder.news_image);
+
+
     }
 
     @Override
     public int getItemCount() {
+
         return ITEMS.size();
     }
 
@@ -60,6 +68,7 @@ public class Adapter_For_RecyclerView extends RecyclerView.Adapter<ViewHolder_Fo
         ITEMS.clear();
         ITEMS.addAll(updated_news);
         notifyDataSetChanged();
+
     }
 
 }
